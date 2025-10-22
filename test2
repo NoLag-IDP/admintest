@@ -1,0 +1,253 @@
+-- 🧠 Admin Panel GUI (Executor Script) — Left/Right Layout w/ Functions
+-- Made by Siva
+
+---------------- Services / Remotes ----------------
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("ReplicatedStorage")
+local CG = game:GetService("CoreGui")
+
+local player = Players.LocalPlayer
+local CONCH = RS:WaitForChild("conch_networking", 5)
+local INVOKE = CONCH and CONCH:WaitForChild("invoke_server_command", 5)
+
+local INVOKE_ID = {
+    spawnbrainrot = 1,
+    executeallevents = 1,
+    executeevent = 2,
+    setmoney = 3,
+    setrebirth = 4,
+    spawnluckyblock = 5,
+}
+
+local EVENT_LIST = {
+"10B Visits","4th of July","Bombardiro Crocodilo","Chicleteira Bicicleteira","Crab Rave",
+"La Vacca Saturno Saturnita","Los Matteos","Nyan Cats","Phase 1: Sleepy","Phase 2: Galaxy Introduction",
+"Phase 3: Sammy's Base","Phase 4: Mygame43","Phase 5: Sammy Snap","Raining Tacos","Rap Concert",
+"Sammyni Spyderini","Solar Flare","Tung Tung Attack","1MEvent","300K","Brazil","Bubblegum","Candy",
+"Concert","DulDulDul","Extinct","FatSammy","Galaxy","Glitch","Matteo","Mexico","Molten","Pinata",
+"Rain","Rainbow","Snow","Starfall","Stock","Strawberry","UFO","Water","YinYang","x4Event","x6Event","x8Event"
+}
+
+---------------- Utils ----------------
+local function sendInvokeExact(name, args_tbl)
+    if not INVOKE then return false, "invoke_remote_not_found" end
+    local payload = { invoke_id = INVOKE_ID[name] or 1, name = name, args = args_tbl or {} }
+    local ok, err = pcall(function() INVOKE:FireServer(payload) end)
+    return ok, ok and "invoke" or tostring(err)
+end
+
+local function r(o, rad)
+    local c=Instance.new("UICorner",o)
+    c.CornerRadius=UDim.new(0, rad or 8)
+    return c
+end
+
+local function parseNumber(txt)
+    txt=tostring(txt or ""):gsub("[^%d%-%.]","")
+    return tonumber(txt)
+end
+
+local function mkLabel(parent, text, size, bold)
+    local l=Instance.new("TextLabel", parent)
+    l.Size=UDim2.new(1,0,0,size+5)
+    l.BackgroundTransparency=1
+    l.Text=text
+    l.Font=bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    l.TextSize=size
+    l.TextColor3=Color3.fromRGB(220,225,240)
+    l.TextXAlignment=Enum.TextXAlignment.Left
+    return l
+end
+
+local function padL(o,px)
+    local p=Instance.new("UIPadding",o)
+    p.PaddingLeft=UDim.new(0,px or 8)
+    return p
+end
+
+local function addDrag(handle, target)
+    handle.Active, target.Active = true, true
+    local dragging = false
+    local dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = target.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            local newPos = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+            target.Position = newPos
+        end
+    end)
+end
+
+-- Destroy existing GUI
+if CG:FindFirstChild("AdminPanelGUI") then
+    CG.AdminPanelGUI:Destroy()
+end
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AdminPanelGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = CG
+
+-- Outline Frame
+local outlineFrame = Instance.new("Frame")
+outlineFrame.Size = UDim2.new(0, 520, 0, 320)
+outlineFrame.Position = UDim2.new(0,50,0.5,-160)
+outlineFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+outlineFrame.BorderSizePixel = 0
+outlineFrame.Parent = ScreenGui
+r(outlineFrame,10)
+
+-- Main Frame inside Outline
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(1,-6,1,-6)
+mainFrame.Position = UDim2.new(0,3,0,3)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = outlineFrame
+r(mainFrame,10)
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0,200,0,40)
+title.Position = UDim2.new(0.05,0,0,6)
+title.BackgroundTransparency = 1
+title.Text = "Admin Panel"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 28
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = mainFrame
+
+-- Minimize Button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0,36,0,28)
+minimizeBtn.Position = UDim2.new(1,-44,0,8)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(180,30,30)
+minimizeBtn.Text = "—"
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 18
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = mainFrame
+r(minimizeBtn,6)
+
+local minimized = false
+local fullSize = outlineFrame.Size
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=UDim2.new(0,520,0,60)}):Play()
+        for _, obj in pairs(mainFrame:GetChildren()) do
+            if obj ~= title and obj ~= minimizeBtn then obj.Visible = false end
+        end
+    else
+        TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=fullSize}):Play()
+        for _, obj in pairs(mainFrame:GetChildren()) do
+            obj.Visible = true
+        end
+    end
+end)
+
+-- Made by Siva
+local madeBy = Instance.new("TextLabel")
+madeBy.Size = UDim2.new(1,0,0,30)
+madeBy.Position = UDim2.new(0,0,1,-30)
+madeBy.BackgroundTransparency = 1
+madeBy.Text = ".gg/M64MsM7E6V"
+madeBy.Font = Enum.Font.Gotham
+madeBy.TextSize = 14
+madeBy.TextColor3 = Color3.fromRGB(255,255,255)
+madeBy.Parent = mainFrame
+
+-- ---------------- Create Tabs / Sections ----------------
+local tabBtns = {}
+local tabFrames = {}
+
+local function createTab(name)
+    local btn = Instance.new("TextButton", mainFrame)
+    btn.Size = UDim2.new(0,120,0,28)
+    btn.Position = UDim2.new(0,10,0,#tabBtns*34 + 50)
+    btn.BackgroundColor3 = Color3.fromRGB(180,30,30)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.BorderSizePixel = 0
+    r(btn,6)
+    
+    local frame = Instance.new("Frame", mainFrame)
+    frame.Size = UDim2.new(1,-20,1,-80)
+    frame.Position = UDim2.new(0,10,0,90)
+    frame.BackgroundTransparency = 1
+    frame.Visible = false
+    
+    tabBtns[name] = btn
+    tabFrames[name] = frame
+    
+    btn.MouseButton1Click:Connect(function()
+        for n, b in pairs(tabBtns) do
+            tabFrames[n].Visible = false
+        end
+        frame.Visible = true
+    end)
+    
+    return frame
+end
+
+-- ---------------- Tabs ----------------
+local petTab = createTab("Pet")
+local eventTab = createTab("Event")
+local moneyTab = createTab("Money")
+local rebirthTab = createTab("Rebirth")
+local luckyTab = createTab("Lucky")
+
+-- ---------------- Functions for Buttons ----------------
+local function mkButton(parent, text, callback)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0,200,0,40)
+    btn.BackgroundColor3 = Color3.fromRGB(255,100,100)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.BorderSizePixel = 0
+    r(btn,8)
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local function mkTextBox(parent, placeholder, default)
+    local box = Instance.new("TextBox", parent)
+    box.Size = UDim2.new(0,200,0,40)
+    box.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    box.PlaceholderText = placeholder
+    box.Text = default or ""
+    box.TextColor3 = Color3.fromRGB(255,255,255)
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 16
+    box.BorderSizePixel = 0
+    r(box,8)
+    return box
+end
+
+-- Now you can add **Pet / Event / Money / Rebirth / Lucky buttons and textboxes** inside their respective tabs  
+-- using mkButton() and mkTextBox(), and link them to sendInvokeExact() functions
