@@ -1,0 +1,252 @@
+-- 🧠 Admin Panel GUI with Secondary GUIs
+-- Made by Siva
+
+if game.CoreGui:FindFirstChild("AdminPanelGUI") then
+    game.CoreGui.AdminPanelGUI:Destroy()
+end
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RS = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Remotes
+local CONCH = RS:WaitForChild("conch_networking",5)
+local INVOKE = CONCH and CONCH:WaitForChild("invoke_server_command",5)
+local INVOKE_ID = {
+    spawnbrainrot = 1,
+    executeallevents = 1,
+    executeevent = 2,
+    setmoney = 3,
+    setrebirth = 4,
+    spawnluckyblock = 5
+}
+
+-- Event List
+local EVENT_LIST = { 
+    "10B Visits","4th of July","Bombardiro Crocodilo","Chicleteira Bicicleteira","Crab Rave", 
+    "La Vacca Saturno Saturnita","Los Matteos","Nyan Cats","Phase 1: Sleepy","Phase 2: Galaxy Introduction", 
+    "Phase 3: Sammy's Base","Phase 4: Mygame43","Phase 5: Sammy Snap","Raining Tacos","Rap Concert", 
+    "Sammyni Spyderini","Solar Flare","Tung Tung Attack","1MEvent","300K","Brazil","Bubblegum","Candy", 
+    "Concert","DulDulDul","Extinct","FatSammy","Galaxy","Glitch","Matteo","Mexico","Molten","Pinata", 
+    "Rain","Rainbow","Snow","Starfall","Stock","Strawberry","UFO","Water","YinYang","x4Event","x6Event","x8Event",
+    "Indonesia","Meowl"
+}
+
+-- Utility Functions
+local function sendInvokeExact(name, args_tbl)
+    if not INVOKE then return false,"invoke_remote_not_found" end
+    local payload={invoke_id=INVOKE_ID[name] or 1,name=name,args=args_tbl or {}}
+    local ok,err=pcall(function() INVOKE:FireServer(payload) end)
+    return ok, ok and "invoke" or tostring(err)
+end
+
+local function r(o, rad)
+    local c=Instance.new("UICorner",o)
+    c.CornerRadius=UDim.new(0, rad or 8)
+    return c
+end
+
+local function parseNumber(txt)
+    txt=tostring(txt or ""):gsub("[^%d%-%.]","")
+    return tonumber(txt)
+end
+
+local function addDrag(handle,target)
+    handle.Active,target.Active=true,true
+    local dragging=false
+    local dragStart,startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            dragging=true
+            dragStart=input.Position
+            startPos=target.Position
+            input.Changed:Connect(function()
+                if input.UserInputState==Enum.UserInputState.End then dragging=false end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+            local delta=input.Position-dragStart
+            local newPos=UDim2.new(
+                startPos.X.Scale,startPos.X.Offset+delta.X,
+                startPos.Y.Scale,startPos.Y.Offset+delta.Y
+            )
+            target.Position=newPos
+        end
+    end)
+end
+
+-- ScreenGui
+local ScreenGui=Instance.new("ScreenGui")
+ScreenGui.Name="AdminPanelGUI"
+ScreenGui.ResetOnSpawn=false
+ScreenGui.IgnoreGuiInset=true
+ScreenGui.Parent=game.CoreGui
+
+-- Outline Frame
+local outlineFrame=Instance.new("Frame")
+outlineFrame.Size=UDim2.new(0,520,0,320)
+outlineFrame.Position=UDim2.new(0,50,0.5,-160)
+outlineFrame.BackgroundColor3=Color3.fromRGB(255,255,255)
+outlineFrame.BorderSizePixel=0
+outlineFrame.Parent=ScreenGui
+r(outlineFrame,10)
+
+-- Main Frame
+local mainFrame=Instance.new("Frame")
+mainFrame.Size=UDim2.new(1,-6,1,-6)
+mainFrame.Position=UDim2.new(0,3,0,3)
+mainFrame.BackgroundColor3=Color3.fromRGB(40,40,40)
+mainFrame.BorderSizePixel=0
+mainFrame.Parent=outlineFrame
+r(mainFrame,10)
+
+-- Title
+local title=Instance.new("TextLabel")
+title.Size=UDim2.new(0,200,0,40)
+title.Position=UDim2.new(0.05,0,0,6)
+title.BackgroundTransparency=1
+title.Text="Admin Panel"
+title.Font=Enum.Font.GothamBold
+title.TextSize=28
+title.TextColor3=Color3.fromRGB(255,255,255)
+title.TextXAlignment=Enum.TextXAlignment.Left
+title.Parent=mainFrame
+
+-- Minimize Button
+local minimized=false
+local fullSize=outlineFrame.Size
+local minimizeBtn=Instance.new("TextButton")
+minimizeBtn.Size=UDim2.new(0,36,0,28)
+minimizeBtn.Position=UDim2.new(1,-44,0,8)
+minimizeBtn.BackgroundColor3=Color3.fromRGB(180,30,30)
+minimizeBtn.Text="—"
+minimizeBtn.Font=Enum.Font.GothamBold
+minimizeBtn.TextSize=18
+minimizeBtn.TextColor3=Color3.fromRGB(255,255,255)
+minimizeBtn.BorderSizePixel=0
+minimizeBtn.Parent=mainFrame
+r(minimizeBtn,6)
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=UDim2.new(0,520,0,60)}):Play()
+        for _,v in pairs(mainFrame:GetChildren()) do
+            if v:IsA("TextButton") or v:IsA("TextBox") or v:IsA("TextLabel") then
+                if v~=title and v~=minimizeBtn then v.Visible=false end
+            end
+        end
+    else
+        TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=fullSize}):Play()
+        for _,v in pairs(mainFrame:GetChildren()) do
+            if v:IsA("TextButton") or v:IsA("TextBox") or v:IsA("TextLabel") then
+                v.Visible=true
+            end
+        end
+    end
+end)
+
+-- Made by Siva
+local madeBy=Instance.new("TextLabel")
+madeBy.Size=UDim2.new(1,0,0,30)
+madeBy.Position=UDim2.new(0,0,1,-30)
+madeBy.BackgroundTransparency=1
+madeBy.Text=".gg/M64MsM7E6V"
+madeBy.Font=Enum.Font.Gotham
+madeBy.TextSize=14
+madeBy.TextColor3=Color3.fromRGB(255,255,255)
+madeBy.Parent=mainFrame
+
+-- Function to create buttons
+local function createButton(name,leftSide,yOffset)
+    local btn=Instance.new("TextButton")
+    btn.Text=name
+    btn.Font=Enum.Font.GothamBold
+    btn.TextSize=18
+    btn.TextColor3=Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3=Color3.fromRGB(255,100,100)
+    btn.Size=UDim2.new(0,240,0,50) -- MATCH MAIN GUI SIZE
+    btn.Position=UDim2.new(leftSide and 0.05 or 0.5,0,0,yOffset)
+    btn.Parent=mainFrame
+    r(btn,8)
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(255,80,80) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(255,100,100) end)
+    return btn
+end
+
+-- Function to create TextBox
+local function createBox(placeholder,leftSide,yOffset)
+    local box=Instance.new("TextBox")
+    box.PlaceholderText=placeholder
+    box.Font=Enum.Font.Gotham
+    box.TextSize=18
+    box.TextColor3=Color3.fromRGB(255,255,255)
+    box.BackgroundColor3=Color3.fromRGB(50,50,50)
+    box.Size=UDim2.new(0,240,0,50) -- MATCH MAIN GUI SIZE
+    box.Position=UDim2.new(leftSide and 0.05 or 0.5,0,0,yOffset)
+    box.Parent=mainFrame
+    r(box,8)
+    return box
+end
+
+-- Buttons & Boxes
+local spawnBrainrotsBtn=createButton("Spawn Brainrot",true,60)
+local executeAllEventsBtn=createButton("Execute All Events",false,60)
+local executeEventsBtn=createButton("Execute Event",true,130)
+local spawnLuckyBlockBtn=createButton("Spawn Any Lucky Block",false,130)
+local addMoneyBtn=createButton("Add Money",true,200)
+local moneyBox=createBox("Set Money",false,200)
+local setRebirthBtn=createButton("Set Rebirth",true,270)
+local rebirthBox=createBox("Set Rebirth",false,270)
+
+-- Dragging
+addDrag(mainFrame,outlineFrame)
+
+-- --- SECONDARY GUI FUNCTIONS ---
+local function createSpawnBrainrotGUI()
+    local frame=Instance.new("Frame")
+    frame.Size=UDim2.new(0,300,0,120)
+    frame.Position=UDim2.new(0.5,-150,0.5,-60)
+    frame.BackgroundColor3=Color3.fromRGB(30,30,40)
+    frame.Parent=ScreenGui
+    r(frame,10)
+
+    local closeBtn=Instance.new("TextButton",frame)
+    closeBtn.Size=UDim2.new(0,24,0,24)
+    closeBtn.Position=UDim2.new(1,-28,0,4)
+    closeBtn.Text="×"
+    closeBtn.Font=Enum.Font.GothamBold
+    closeBtn.TextSize=18
+    closeBtn.TextColor3=Color3.fromRGB(255,100,100)
+    closeBtn.BackgroundColor3=Color3.fromRGB(50,50,50)
+    closeBtn.BorderSizePixel=0
+    r(closeBtn,6)
+    closeBtn.MouseButton1Click:Connect(function() frame:Destroy() end)
+
+    local nameBox=createBox("Place the Brainrots Name",true,40)
+    nameBox.Size=UDim2.new(0,240,0,40)
+    nameBox.Position=UDim2.new(0.05,0,0,40)
+    nameBox.Parent=frame
+
+    local mutBox=createBox("Normal",true,90)
+    mutBox.Size=UDim2.new(0,150,0,40)
+    mutBox.Position=UDim2.new(0.05,0,0,90)
+    mutBox.Parent=frame
+
+    local spawnBtn=createButton("SPAWN",false,90)
+    spawnBtn.Size=UDim2.new(0,90,0,40)
+    spawnBtn.Position=UDim2.new(0.65,0,0,90)
+    spawnBtn.Parent=frame
+    spawnBtn.MouseButton1Click:Connect(function()
+        local name=nameBox.Text
+        local mut=mutBox.Text
+        local args=(mut~="" and mut~="Normal") and {name,"",mut} or {name}
+        sendInvokeExact("spawnbrainrot",args)
+    end)
+end
+
+spawnBrainrotsBtn.MouseButton1Click:Connect(createSpawnBrainrotGUI)
