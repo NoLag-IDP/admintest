@@ -1,0 +1,263 @@
+-- 🧠 Admin Panel GUI (Executor Script) — Left/Right Layout
+-- Made by Siva
+
+if game.CoreGui:FindFirstChild("AdminPanelGUI") then
+	game.CoreGui.AdminPanelGUI:Destroy()
+end
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RS  = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+-- Remote setup
+local CONCH  = RS:WaitForChild("conch_networking", 5)
+local INVOKE = CONCH and CONCH:WaitForChild("invoke_server_command", 5)
+
+local INVOKE_ID = {
+    spawnbrainrot     = 1,
+    executeallevents  = 1,
+    executeevent      = 2,
+    setmoney          = 3,
+    setrebirth        = 4,
+    spawnluckyblock   = 5,
+}
+
+local function sendInvokeExact(name, args_tbl)
+    if not INVOKE then return false, "invoke_remote_not_found" end
+    local payload = { invoke_id = INVOKE_ID[name] or 1, name = name, args = args_tbl or {} }
+    local ok, err = pcall(function() INVOKE:FireServer(payload) end)
+    return ok, ok and "invoke" or tostring(err)
+end
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AdminPanelGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = game.CoreGui
+
+-- White Outline Frame (Thin border)
+local outlineFrame = Instance.new("Frame")
+outlineFrame.Size = UDim2.new(0, 520, 0, 320)
+outlineFrame.Position = UDim2.new(0, 50, 0.5, -160)
+outlineFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+outlineFrame.BorderSizePixel = 0
+outlineFrame.Parent = ScreenGui
+
+local outlineCorner = Instance.new("UICorner")
+outlineCorner.CornerRadius = UDim.new(0, 10)
+outlineCorner.Parent = outlineFrame
+
+-- Main Frame inside Outline
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(1, -6, 1, -6)
+mainFrame.Position = UDim2.new(0, 3, 0, 3)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = outlineFrame
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 200, 0, 40)
+title.Position = UDim2.new(0.05, 0, 0, 6)
+title.BackgroundTransparency = 1
+title.Text = "Admin Panel"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 28
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = mainFrame
+
+-- Minimize Button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0,36,0,28)
+minimizeBtn.Position = UDim2.new(1,-44,0,8)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(180,30,30)
+minimizeBtn.Text = "—"
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 18
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = mainFrame
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0,6)
+minCorner.Parent = minimizeBtn
+
+-- Function to create buttons
+local function createButton(name, leftSide, yOffset)
+	local btn = Instance.new("TextButton")
+	btn.Text = name
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 18
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.BackgroundColor3 = Color3.fromRGB(255,100,100)
+	btn.Size = UDim2.new(0, 200, 0, 50)
+	btn.Position = UDim2.new(leftSide and 0.05 or 0.55, 0, 0, yOffset)
+	btn.Parent = mainFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0,8)
+	corner.Parent = btn
+
+	btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(255,80,80) end)
+	btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(255,100,100) end)
+
+	return btn
+end
+
+-- Buttons
+local spawnBrainrotsBtn = createButton("Spawn Brainrots", true, 60) -- left
+local executeAllEventsBtn = createButton("Execute All Events", false, 60) -- right
+local executeEventsBtn = createButton("Execute Events", true, 130) -- left
+local spawnLuckyBlockBtn = createButton("Spawn Any Lucky Block", false, 130) -- right
+local addMoneyBtn = createButton("Add Money", true, 200) -- left
+
+-- Money TextBox
+local moneyBox = Instance.new("TextBox")
+moneyBox.PlaceholderText = "Insert Money Here"
+moneyBox.Font = Enum.Font.Gotham
+moneyBox.TextSize = 18
+moneyBox.TextColor3 = Color3.fromRGB(255,255,255)
+moneyBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+moneyBox.Size = UDim2.new(0,200,0,50)
+moneyBox.Position = UDim2.new(0.55,0,0,200)
+moneyBox.Parent = mainFrame
+
+local moneyCorner = Instance.new("UICorner")
+moneyCorner.CornerRadius = UDim.new(0,8)
+moneyCorner.Parent = moneyBox
+
+-- Made by Siva
+local madeBy = Instance.new("TextLabel")
+madeBy.Size = UDim2.new(1,0,0,30)
+madeBy.Position = UDim2.new(0,0,1,-30)
+madeBy.BackgroundTransparency = 1
+madeBy.Text = ".gg/M64MsM7E6V"
+madeBy.Font = Enum.Font.Gotham
+madeBy.TextSize = 14
+madeBy.TextColor3 = Color3.fromRGB(255,255,255)
+madeBy.Parent = mainFrame
+
+-- Minimize Logic
+local minimized = false
+local fullSize = outlineFrame.Size
+
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=UDim2.new(0,520,0,60)}):Play()
+		spawnBrainrotsBtn.Visible = false
+		executeAllEventsBtn.Visible = false
+		executeEventsBtn.Visible = false
+		spawnLuckyBlockBtn.Visible = false
+		addMoneyBtn.Visible = false
+		moneyBox.Visible = false
+		madeBy.Visible = false
+	else
+		TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=fullSize}):Play()
+		spawnBrainrotsBtn.Visible = true
+		executeAllEventsBtn.Visible = true
+		executeEventsBtn.Visible = true
+		spawnLuckyBlockBtn.Visible = true
+		addMoneyBtn.Visible = true
+		moneyBox.Visible = true
+		madeBy.Visible = true
+	end
+end)
+
+-- Secondary GUI for Spawn Brainrots
+local brainrotFrame = Instance.new("Frame")
+brainrotFrame.Size = UDim2.new(0, 400, 0, 300)
+brainrotFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+brainrotFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+brainrotFrame.BorderSizePixel = 0
+brainrotFrame.Visible = false
+brainrotFrame.Parent = ScreenGui
+
+-- Outline
+local brainrotOutline = Instance.new("Frame")
+brainrotOutline.Size = UDim2.new(1, 6, 1, 6)
+brainrotOutline.Position = UDim2.new(0, -3, 0, -3)
+brainrotOutline.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+brainrotOutline.BorderSizePixel = 0
+brainrotOutline.Parent = brainrotFrame
+
+local brainrotOutlineCorner = Instance.new("UICorner")
+brainrotOutlineCorner.CornerRadius = UDim.new(0, 10)
+brainrotOutlineCorner.Parent = brainrotOutline
+
+local brainrotCorner = Instance.new("UICorner")
+brainrotCorner.CornerRadius = UDim.new(0, 10)
+brainrotCorner.Parent = brainrotFrame
+
+-- Title
+local brainrotTitle = Instance.new("TextLabel")
+brainrotTitle.Size = UDim2.new(0, 250, 0, 40)
+brainrotTitle.Position = UDim2.new(0.05, 0, 0, 6)
+brainrotTitle.BackgroundTransparency = 1
+brainrotTitle.Text = "Spawn Brainrots"
+brainrotTitle.Font = Enum.Font.GothamBold
+brainrotTitle.TextSize = 28
+brainrotTitle.TextColor3 = Color3.fromRGB(255,255,255)
+brainrotTitle.TextXAlignment = Enum.TextXAlignment.Left
+brainrotTitle.Parent = brainrotFrame
+
+-- Close Button for secondary GUI
+local closeBrainrotBtn = Instance.new("TextButton")
+closeBrainrotBtn.Size = UDim2.new(0,36,0,28)
+closeBrainrotBtn.Position = UDim2.new(1,-44,0,8)
+closeBrainrotBtn.BackgroundColor3 = Color3.fromRGB(180,30,30)
+closeBrainrotBtn.Text = "×"
+closeBrainrotBtn.Font = Enum.Font.GothamBold
+closeBrainrotBtn.TextSize = 18
+closeBrainrotBtn.TextColor3 = Color3.fromRGB(255,255,255)
+closeBrainrotBtn.BorderSizePixel = 0
+closeBrainrotBtn.Parent = brainrotFrame
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0,6)
+closeCorner.Parent = closeBrainrotBtn
+
+closeBrainrotBtn.MouseButton1Click:Connect(function()
+	brainrotFrame.Visible = false
+end)
+
+-- Made by Siva on secondary GUI
+local brainrotMadeBy = Instance.new("TextLabel")
+brainrotMadeBy.Size = UDim2.new(1,0,0,30)
+brainrotMadeBy.Position = UDim2.new(0,0,1,-30)
+brainrotMadeBy.BackgroundTransparency = 1
+brainrotMadeBy.Text = ".gg/M64MsM7E6V"
+brainrotMadeBy.Font = Enum.Font.Gotham
+brainrotMadeBy.TextSize = 14
+brainrotMadeBy.TextColor3 = Color3.fromRGB(255,255,255)
+brainrotMadeBy.Parent = brainrotFrame
+
+-- Button Callbacks using sendInvokeExact
+spawnBrainrotsBtn.MouseButton1Click:Connect(function()
+	brainrotFrame.Visible = true -- show secondary GUI
+	sendInvokeExact("spawnbrainrot", {"Strawberry Elephant"})
+end)
+
+executeAllEventsBtn.MouseButton1Click:Connect(function()
+	sendInvokeExact("executeallevents", {})
+end)
+
+executeEventsBtn.MouseButton1Click:Connect(function()
+	sendInvokeExact("executeevent", {"10B Visits"})
+end)
+
+spawnLuckyBlockBtn.MouseButton1Click:Connect(function()
+	sendInvokeExact("spawnluckyblock", {"Secret Lucky Block"})
+end)
+
+addMoneyBtn.MouseButton1Click:Connect(function()
+	local val = tonumber(moneyBox.Text)
+	if val then
+		sendInvokeExact("setmoney", {val})
+	end
+end)
