@@ -1,0 +1,221 @@
+-- 🧠 Admin Panel GUI — Left/Right Layout
+-- Made by Siva
+
+if game.CoreGui:FindFirstChild("AdminPanelGUI") then
+	game.CoreGui.AdminPanelGUI:Destroy()
+end
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+local RS = game:GetService("ReplicatedStorage")
+
+-- ---------------- Remotes ----------------
+local CONCH = RS:WaitForChild("conch_networking",5)
+local INVOKE = CONCH and CONCH:WaitForChild("invoke_server_command",5)
+local INVOKE_ID = {
+	spawnbrainrot=1,
+	executeallevents=1,
+	executeevent=2,
+	setmoney=3,
+	setrebirth=4,
+	spawnluckyblock=5
+}
+
+local function sendInvokeExact(name,args_tbl)
+	if not INVOKE then return false,"invoke_remote_not_found" end
+	local payload={invoke_id=INVOKE_ID[name] or 1, name=name, args=args_tbl or {}}
+	local ok,err = pcall(function() INVOKE:FireServer(payload) end)
+	return ok,ok and "invoke" or tostring(err)
+end
+
+-- ---------------- Data ----------------
+local EVENT_LIST = {
+"10B Visits","4th of July","Bombardiro Crocodilo","Chicleteira Bicicleteira","Crab Rave",
+"La Vacca Saturno Saturnita","Los Matteos","Nyan Cats","Phase 1: Sleepy","Phase 2: Galaxy Introduction",
+"Phase 3: Sammy's Base","Phase 4: Mygame43","Phase 5: Sammy Snap","Raining Tacos","Rap Concert",
+"Sammyni Spyderini","Solar Flare","Tung Tung Attack","1MEvent","300K","Brazil","Bubblegum","Candy",
+"Concert","DulDulDul","Extinct","FatSammy","Galaxy","Glitch","Matteo","Mexico","Molten","Pinata",
+"Rain","Rainbow","Snow","Starfall","Stock","Strawberry","UFO","Water","YinYang","x4Event","x6Event","x8Event",
+"Indonesia","Meowl"
+}
+
+-- ---------------- GUI ----------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AdminPanelGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = game.CoreGui
+
+-- Outline
+local outlineFrame = Instance.new("Frame")
+outlineFrame.Size = UDim2.new(0,520,0,320)
+outlineFrame.Position = UDim2.new(0,50,0.5,-160)
+outlineFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+outlineFrame.BorderSizePixel = 0
+outlineFrame.Parent = ScreenGui
+Instance.new("UICorner",outlineFrame).CornerRadius = UDim.new(0,10)
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(1,-6,1,-6)
+mainFrame.Position = UDim2.new(0,3,0,3)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = outlineFrame
+Instance.new("UICorner",mainFrame).CornerRadius = UDim.new(0,10)
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0,200,0,40)
+title.Position = UDim2.new(0.05,0,0,6)
+title.BackgroundTransparency = 1
+title.Text = "Admin Panel"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 28
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = mainFrame
+
+-- Minimize
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0,36,0,28)
+minimizeBtn.Position = UDim2.new(1,-44,0,8)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(180,30,30)
+minimizeBtn.Text = "—"
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 18
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = mainFrame
+Instance.new("UICorner",minimizeBtn).CornerRadius = UDim.new(0,6)
+
+-- ---------------- Helpers ----------------
+local function createButton(name,leftSide,yOffset,color)
+	local btn = Instance.new("TextButton")
+	btn.Text = name
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 18
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.BackgroundColor3 = color or Color3.fromRGB(255,100,100)
+	btn.Size = UDim2.new(0,200,0,50)
+	btn.Position = UDim2.new(leftSide and 0.05 or 0.55,0,0,yOffset)
+	btn.Parent = mainFrame
+	Instance.new("UICorner",btn).CornerRadius = UDim.new(0,8)
+	btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(255,80,80) end)
+	btn.MouseLeave:Connect(function() btn.BackgroundColor3 = color or Color3.fromRGB(255,100,100) end)
+	return btn
+end
+
+local function createTextBox(placeholder,leftSide,yOffset)
+	local box = Instance.new("TextBox")
+	box.PlaceholderText = placeholder
+	box.Font = Enum.Font.Gotham
+	box.TextSize = 18
+	box.TextColor3 = Color3.fromRGB(255,255,255)
+	box.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	box.Size = UDim2.new(0,200,0,50)
+	box.Position = UDim2.new(leftSide and 0.05 or 0.55,0,0,yOffset)
+	box.Parent = mainFrame
+	Instance.new("UICorner",box).CornerRadius = UDim.new(0,8)
+	return box
+end
+
+local function createDropdown(options,leftSide,yOffset)
+	local selected = options[1]
+	local dropBtn = createButton(selected.." ▾",leftSide,yOffset,Color3.fromRGB(55,65,80))
+	local dropFrame = Instance.new("Frame",ScreenGui)
+	dropFrame.Size = UDim2.new(0,200,0,#options*28)
+	dropFrame.Position = UDim2.fromOffset(dropBtn.AbsolutePosition.X,dropBtn.AbsolutePosition.Y+dropBtn.AbsoluteSize.Y+5)
+	dropFrame.BackgroundColor3 = Color3.fromRGB(25,27,35)
+	dropFrame.BorderSizePixel = 0
+	dropFrame.Visible = false
+	Instance.new("UICorner",dropFrame).CornerRadius = UDim.new(0,6)
+	
+	for i,opt in ipairs(options) do
+		local item = Instance.new("TextButton",dropFrame)
+		item.Size = UDim2.new(1,0,0,28)
+		item.Position = UDim2.new(0,0,0,(i-1)*28)
+		item.Text = opt
+		item.TextSize = 16
+		item.Font = Enum.Font.Gotham
+		item.TextColor3 = Color3.fromRGB(255,255,255)
+		item.BackgroundColor3 = Color3.fromRGB(35,37,45)
+		Instance.new("UICorner",item).CornerRadius = UDim.new(0,4)
+		item.MouseButton1Click:Connect(function()
+			selected = opt
+			dropBtn.Text = opt.." ▾"
+			dropFrame.Visible = false
+		end)
+	end
+	
+	dropBtn.MouseButton1Click:Connect(function()
+		dropFrame.Visible = not dropFrame.Visible
+	end)
+	
+	return dropBtn,function() return selected end
+end
+
+-- ---------------- Buttons & TextBoxes ----------------
+local yOffset = 60
+-- Events
+local eventDropdown,getEvent = createDropdown(EVENT_LIST,true,yOffset)
+local execAllBtn = createButton("Execute All Events",false,yOffset,Color3.fromRGB(140,70,190))
+yOffset = yOffset + 70
+local execEventBtn = createButton("Execute Selected",true,yOffset,Color3.fromRGB(88,101,242))
+yOffset = yOffset + 70
+
+-- Money
+local moneyBox = createTextBox("Money Amount",false,yOffset)
+local setMoneyBtn = createButton("Set Money",true,yOffset,Color3.fromRGB(60,140,75))
+yOffset = yOffset + 70
+
+-- Rebirth
+local rebirthBox = createTextBox("Rebirth Amount",false,yOffset)
+local setRebirthBtn = createButton("Set Rebirth",true,yOffset,Color3.fromRGB(140,70,190))
+yOffset = yOffset + 70
+
+-- Lucky Block
+local luckyBox = createTextBox("Lucky Block Name",false,yOffset)
+local spawnLuckyBtn = createButton("Spawn Lucky Block",true,yOffset,Color3.fromRGB(55,165,110))
+
+-- ---------------- Button Logic ----------------
+execAllBtn.MouseButton1Click:Connect(function()
+	sendInvokeExact("executeallevents",{})
+end)
+execEventBtn.MouseButton1Click:Connect(function()
+	sendInvokeExact("executeevent",{getEvent()})
+end)
+setMoneyBtn.MouseButton1Click:Connect(function()
+	local val = tonumber(moneyBox.Text)
+	if val then sendInvokeExact("setmoney",{val}) end
+end)
+setRebirthBtn.MouseButton1Click:Connect(function()
+	local val = tonumber(rebirthBox.Text)
+	if val then sendInvokeExact("setrebirth",{val}) end
+end)
+spawnLuckyBtn.MouseButton1Click:Connect(function()
+	local name = luckyBox.Text ~= "" and luckyBox.Text or "Secret Lucky Block"
+	sendInvokeExact("spawnluckyblock",{name})
+end)
+
+-- Made by Siva
+local madeBy = Instance.new("TextLabel")
+madeBy.Size = UDim2.new(1,0,0,30)
+madeBy.Position = UDim2.new(0,0,1,-30)
+madeBy.BackgroundTransparency = 1
+madeBy.Text = ".gg/M64MsM7E6V"
+madeBy.Font = Enum.Font.Gotham
+madeBy.TextSize = 14
+madeBy.TextColor3 = Color3.fromRGB(255,255,255)
+madeBy.Parent = mainFrame
+
+-- Minimize
+local minimized = false
+local fullSize = outlineFrame.Size
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	local objs = {eventDropdown,execAllBtn,execEventBtn,moneyBox,setMoneyBtn,rebirthBox,setRebirthBtn,luckyBox,spawnLuckyBtn,madeBy}
+	for _,v in pairs(objs) do v.Visible = not minimized end
+	TweenService:Create(outlineFrame,TweenInfo.new(0.3),{Size=minimized and UDim2.new(0,520,0,60) or fullSize}):Play()
+end)
