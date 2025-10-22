@@ -1,0 +1,83 @@
+dropScroll.BorderSizePixel = 0
+dropScroll.ScrollBarThickness = 3
+dropScroll.ScrollBarImageColor3 = Color3.fromRGB(88,101,242)
+dropScroll.Parent = dropFrame
+
+local dropLayout = Instance.new("UIListLayout", dropScroll)
+dropLayout.Padding = UDim.new(0,2)
+dropLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+for _, evtName in ipairs(EVENT_LIST) do
+    local item = Instance.new("TextButton", dropScroll)
+    item.Size = UDim2.new(1,-4,0,26)
+    item.BackgroundColor3 = Color3.fromRGB(35,37,45)
+    item.Text = evtName
+    item.Font = Enum.Font.Gotham
+    item.TextSize = 14
+    item.TextColor3 = Color3.fromRGB(220,225,240)
+    item.TextXAlignment = Enum.TextXAlignment.Left
+    item.BorderSizePixel = 0
+    item.ZIndex = 2
+    Instance.new("UICorner", item).CornerRadius = UDim.new(0,5)
+    
+    item.MouseButton1Click:Connect(function()
+        selectedEvent = evtName
+        dropBtn.Text = evtName.." ▾"
+        dropFrame.Visible = false
+    end)
+end
+
+dropLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    dropScroll.CanvasSize = UDim2.new(0,0,0,dropLayout.AbsoluteContentSize.Y + 4)
+end)
+
+dropBtn.MouseButton1Click:Connect(function()
+    dropFrame.Visible = not dropFrame.Visible
+end)
+
+-- Execute Event Buttons
+local execAllBtn = createButton("Execute All Events", false, 380)
+execAllBtn.MouseButton1Click:Connect(function()
+    sendInvokeExact("executeallevents", {})
+end)
+
+local execSelectedBtn = createButton("Execute Selected Event", false, 320)
+execSelectedBtn.MouseButton1Click:Connect(function()
+    if selectedEvent then
+        sendInvokeExact("executeevent", {selectedEvent})
+    end
+end)
+
+-- Made by Siva Label
+local madeBy = Instance.new("TextLabel")
+madeBy.Size = UDim2.new(1,0,0,30)
+madeBy.Position = UDim2.new(0,0,1,-30)
+madeBy.BackgroundTransparency = 1
+madeBy.Text = ".gg/M64MsM7E6V"
+madeBy.Font = Enum.Font.Gotham
+madeBy.TextSize = 14
+madeBy.TextColor3 = Color3.fromRGB(255,255,255)
+madeBy.Parent = mainFrame
+
+-- Minimize Logic
+local minimized = false
+local fullSize = outlineFrame.Size
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        TweenService:Create(outlineFrame, TweenInfo.new(0.3), {Size = UDim2.new(0,520,0,60)}):Play()
+        for _, obj in pairs(mainFrame:GetChildren()) do
+            if obj:IsA("TextButton") or obj:IsA("TextBox") or obj:IsA("TextLabel") then
+                obj.Visible = false
+            end
+        end
+        title.Visible = true
+        minimizeBtn.Visible = true
+    else
+        TweenService:Create(outlineFrame, TweenInfo.new(0.3), {Size = fullSize}):Play()
+        for _, obj in pairs(mainFrame:GetChildren()) do
+            obj.Visible = true
+        end
+    end
+end)
