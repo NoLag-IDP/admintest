@@ -1,0 +1,249 @@
+-- 🧠 Admin Panel GUI (Executor Script) — Left/Right Layout
+-- Made by Siva
+
+if game.CoreGui:FindFirstChild("AdminPanelGUI") then
+    game.CoreGui.AdminPanelGUI:Destroy()
+end
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RS = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AdminPanelGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = game.CoreGui
+
+-- Outline Frame
+local outlineFrame = Instance.new("Frame")
+outlineFrame.Size = UDim2.new(0, 420, 0, 280) -- smaller, fixed size
+outlineFrame.Position = UDim2.new(0, 50, 0.5, -140)
+outlineFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+outlineFrame.BorderSizePixel = 0
+outlineFrame.Parent = ScreenGui
+local outlineCorner = Instance.new("UICorner")
+outlineCorner.CornerRadius = UDim.new(0, 10)
+outlineCorner.Parent = outlineFrame
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(1, -6, 1, -6)
+mainFrame.Position = UDim2.new(0, 3, 0, 3)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = outlineFrame
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0, 200, 0, 30)
+title.Position = UDim2.new(0.05, 0, 0, 6)
+title.BackgroundTransparency = 1
+title.Text = "Admin Panel"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = mainFrame
+
+-- Minimize Button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 28, 0, 24)
+minimizeBtn.Position = UDim2.new(1, -36, 0, 6)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+minimizeBtn.Text = "—"
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 18
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Parent = mainFrame
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 6)
+minCorner.Parent = minimizeBtn
+
+-- Function to create buttons
+local function createButton(name, leftSide, yOffset)
+    local btn = Instance.new("TextButton")
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    btn.Size = UDim2.new(0, 190, 0, 40)
+    btn.Position = UDim2.new(leftSide and 0.05 or 0.5, 0, 0, yOffset)
+    btn.Parent = mainFrame
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(255, 80, 80) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(255, 100, 100) end)
+    return btn
+end
+
+-- Function to create TextBox
+local function createBox(placeholder, leftSide, yOffset)
+    local box = Instance.new("TextBox")
+    box.PlaceholderText = placeholder
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 16
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    box.Size = UDim2.new(0, 190, 0, 40)
+    box.Position = UDim2.new(leftSide and 0.05 or 0.5, 0, 0, yOffset)
+    box.Parent = mainFrame
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = box
+    return box
+end
+
+-- Buttons & Boxes
+local spawnBrainrotsBtn = createButton("Spawn Brainrot", true, 50)
+local executeAllEventsBtn = createButton("Execute All Events", false, 50)
+local executeEventsBtn = createButton("Execute Event", true, 110)
+local spawnLuckyBlockBtn = createButton("Spawn Any Lucky Block", false, 110)
+local addMoneyBtn = createButton("Add Money", true, 170)
+local moneyBox = createBox("Set Money", false, 170)
+local setRebirthBtn = createButton("Set Rebirth", true, 230)
+local rebirthBox = createBox("Set Rebirth", false, 230)
+
+-- Made by Siva
+local madeBy = Instance.new("TextLabel")
+madeBy.Size = UDim2.new(1, 0, 0, 20)
+madeBy.Position = UDim2.new(0, 0, 1, -20)
+madeBy.BackgroundTransparency = 1
+madeBy.Text = ".gg/M64MsM7E6V"
+madeBy.Font = Enum.Font.Gotham
+madeBy.TextSize = 14
+madeBy.TextColor3 = Color3.fromRGB(255, 255, 255)
+madeBy.Parent = mainFrame
+
+-- Minimize Logic
+local minimized = false
+local fullSize = outlineFrame.Size
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        TweenService:Create(outlineFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 420, 0, 50)}):Play()
+        for _, v in pairs(mainFrame:GetChildren()) do
+            if v ~= title and v ~= minimizeBtn then
+                v.Visible = false
+            end
+        end
+    else
+        TweenService:Create(outlineFrame, TweenInfo.new(0.3), {Size = fullSize}):Play()
+        for _, v in pairs(mainFrame:GetChildren()) do
+            v.Visible = true
+        end
+    end
+end)
+
+-- Dragging
+local function addDrag(handle, target)
+    handle.Active, target.Active = true, true
+    local dragging, dragStart, startPos = false, nil, nil
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = target.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            target.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+addDrag(mainFrame, outlineFrame)
+
+-- Secondary GUI Helper
+local function createSecondaryGUI(titleText, fields, btnText, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 300, 0, 80 + #fields * 50)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -frame.Size.Y.Offset / 2)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    frame.Parent = ScreenGui
+    local corner = Instance.new("UICorner", frame)
+    corner.CornerRadius = UDim.new(0, 10)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = titleText
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    local y = 40
+    local boxes = {}
+    for i, placeholder in ipairs(fields) do
+        local box = Instance.new("TextBox", frame)
+        box.Size = UDim2.new(0, 280, 0, 40)
+        box.Position = UDim2.new(0, 10, 0, y)
+        box.PlaceholderText = placeholder
+        box.Font = Enum.Font.Gotham
+        box.TextSize = 16
+        box.TextColor3 = Color3.fromRGB(255, 255, 255)
+        box.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        local corner = Instance.new("UICorner", box)
+        corner.CornerRadius = UDim.new(0, 6)
+        table.insert(boxes, box)
+        y = y + 50
+    end
+
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(0, 120, 0, 40)
+    btn.Position = UDim2.new(0.5, -60, 0, y)
+    btn.Text = btnText
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    local cornerBtn = Instance.new("UICorner", btn)
+    cornerBtn.CornerRadius = UDim.new(0, 6)
+    btn.MouseButton1Click:Connect(function()
+        callback(boxes)
+        frame:Destroy()
+    end)
+end
+
+-- Example: Spawn Brainrot Secondary GUI
+spawnBrainrotsBtn.MouseButton1Click:Connect(function()
+    createSecondaryGUI("Spawn Brainrot", {"Place Brainrot Name","Normal"}, "SPAWN", function(boxes)
+        local name = boxes[1].Text
+        local mut = boxes[2].Text
+        print("Spawn Brainrot:", name, mut)
+    end)
+end)
+
+-- Execute Event Secondary GUI
+executeEventsBtn.MouseButton1Click:Connect(function()
+    createSecondaryGUI("Execute Event", {"Select Event"}, "EXECUTE", function(boxes)
+        local event = boxes[1].Text
+        print("Execute Event:", event)
+    end)
+end)
+
+-- Spawn Lucky Block Secondary GUI
+spawnLuckyBlockBtn.MouseButton1Click:Connect(function()
+    createSecondaryGUI("Spawn Lucky Block", {"Lucky Block Name"}, "SPAWN", function(boxes)
+        local lb = boxes[1].Text
+        print("Spawn Lucky Block:", lb)
+    end)
+end)
